@@ -69,6 +69,24 @@ This command will bundle your agent and deploy it to the cloud, making it access
 
 Your project configuration is stored in `agentuity.yaml`. This file defines your agents, development settings, and deployment configuration.
 
+## ✉️ Email Actions
+
+The `actions` agent can create and store email automation rules from plain text instructions. Each rule is saved using the following structure:
+
+```ts
+interface EmailAction {
+  id: string;
+  description: string;
+  action: "notify" | "summarize";
+  criteria: string;
+  createdAt: string;
+}
+```
+
+Example requests include:
+- "send me a notification of an urgent email or from someone that I am actively engaged in a conversation with."
+- "summarize my inbox every morning but only include important emails in the summary."
+
 ## 🛠️ Advanced Usage
 
 ### Environment Variables
