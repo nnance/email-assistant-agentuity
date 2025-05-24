@@ -7,25 +7,21 @@ import type { EmailAction } from './types.js';
 import { saveAction, getActions } from './store.js';
 
 
-type Instruction =
-  | { command: 'list' }
-  | {
-      command: 'create';
-      action: 'notify' | 'summarize';
-      criteria: string;
-      description: string;
-    };
-
-async function interpretInstruction(text: string): Promise<Instruction> {
-  const systemPrompt = `You convert user requests about email actions into JSON.\\n` +
-    `Return only JSON.\\n` +
-    `If the user wants to create a new action, respond with {\\"command\\":\\"create\\",\\"action\\":\\"notify|summarize\\",\\"criteria\\":string,\\"description\\":string}.\\n` +
-    `If the user wants to list existing actions, respond with {\\"command\\":\\"list\\"}.`;
+async function interpretAction(
+  text: string,
+): Promise<Omit<EmailAction, 'id' | 'createdAt'>> {
+  const systemPrompt = `You convert user requests about email actions into JSON.\nReturn only JSON with fields event, action, description, optional criteria, and optional notify {method, frequency}.`;
   const schema = z.object({
-    command: z.enum(['create', 'list']),
-    action: z.enum(['notify', 'summarize']).optional(),
+    event: z.string(),
+    action: z.string(),
+    description: z.string(),
     criteria: z.string().optional(),
-    description: z.string().optional(),
+    notify: z
+      .object({
+        method: z.enum(['email', 'sms', 'push']),
+				frequency: z.enum(['immediate', 'daily', 'weekly']).optional(),
+      })
+      .optional(),
   });
 
   try {
@@ -56,10 +52,10 @@ async function interpretInstruction(text: string): Promise<Instruction> {
       return { command: 'list' };
     }
     return {
-      command: 'create',
+      event: 'new_email',
       action: 'notify',
-      criteria: text,
       description: text,
+      criteria: text,
     };
   }
 }
