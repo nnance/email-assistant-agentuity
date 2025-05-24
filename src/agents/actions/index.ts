@@ -53,8 +53,12 @@ export default async function Agent(
   resp: AgentResponse,
   ctx: AgentContext,
 ) {
-  const input = (await req.data.text()) ?? '';
+  const input = (await req.data.text())?.trim();
+  if (!input) {
+    return resp.status(400).json({ error: 'No instruction provided' });
+  }
   const parsed = await interpretAction(input);
+
   const action: EmailAction = {
     id: randomUUID(),
     createdAt: new Date().toISOString(),
