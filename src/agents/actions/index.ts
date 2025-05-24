@@ -4,24 +4,8 @@ import { z } from 'zod';
 import { anthropic } from '@ai-sdk/anthropic';
 import { randomUUID } from 'crypto';
 import type { EmailAction } from './types.js';
-import { saveAction } from './store.js';
+import { saveAction, getActions } from './store.js';
 
-export const welcome = () => {
-  return {
-    welcome:
-      "Welcome to the Vercel AI SDK with Anthropic Agent! I can help you build AI-powered applications using Vercel's AI SDK with Claude models.",
-    prompts: [
-      {
-        data: 'How do I implement streaming responses with Claude models?',
-        contentType: 'text/plain',
-      },
-      {
-        data: 'What are the best practices for prompt engineering with Claude?',
-        contentType: 'text/plain',
-      },
-    ],
-  };
-};
 
 async function interpretAction(
   text: string,
@@ -47,8 +31,26 @@ async function interpretAction(
       prompt: text,
       schema,
     });
-    return result.object;
+    const obj = result.object;
+    if (obj.command === 'list') {
+      return { command: 'list' };
+    }
+    
+    // Validate required fields for create command
+    if (!obj.action || !obj.criteria || !obj.description) {
+      throw new Error('Missing required fields for create command');
+    }
+    
+    return {
+      command: 'create',
+      action: obj.action,
+      criteria: obj.criteria,
+      description: obj.description,
+    };
   } catch {
+    if (/\blist|show|display\b/i.test(text)) {
+      return { command: 'list' };
+    }
     return {
       event: 'new_email',
       action: 'notify',
@@ -67,12 +69,19 @@ export default async function Agent(
   if (!input) {
     return resp.status(400).json({ error: 'No instruction provided' });
   }
-  const parsed = await interpretAction(input);
+  const instruction = await interpretInstruction(input);
+
+  if (instruction.command === 'list') {
+    const actions = await getActions(ctx);
+    return resp.json({ actions });
+  }
 
   const action: EmailAction = {
     id: randomUUID(),
     createdAt: new Date().toISOString(),
-    ...parsed,
+    action: instruction.action,
+    criteria: instruction.criteria,
+    description: instruction.description,
   };
 
   await saveAction(ctx, action);

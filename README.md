@@ -92,6 +92,8 @@ Example requests include:
 - "send me a notification of an urgent email or from someone that I am actively engaged in a conversation with."
 - "summarize my inbox every morning but only include important emails in the summary."
 
+To see the actions you've already saved, ask the `actions` agent with a natural language prompt such as "show my saved actions". The agent will return the current action objects as JSON.
+
 ## 🛠️ Advanced Usage
 
 ### Environment Variables

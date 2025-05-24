@@ -19,3 +19,4 @@ export async function getActions(
   const current = ((await ctx.kv.get(STORE_NAME, STORE_KEY)) as EmailAction[]) ?? [];
   return current;
 }
+
