@@ -6,22 +6,6 @@ import { randomUUID } from 'crypto';
 import type { EmailAction } from './types.js';
 import { saveAction } from './store.js';
 
-export const welcome = () => {
-  return {
-    welcome:
-      "Welcome to the Vercel AI SDK with Anthropic Agent! I can help you build AI-powered applications using Vercel's AI SDK with Claude models.",
-    prompts: [
-      {
-        data: 'How do I implement streaming responses with Claude models?',
-        contentType: 'text/plain',
-      },
-      {
-        data: 'What are the best practices for prompt engineering with Claude?',
-        contentType: 'text/plain',
-      },
-    ],
-  };
-};
 
 async function interpretAction(text: string): Promise<Omit<EmailAction, 'id' | 'createdAt'>> {
   const systemPrompt = `You convert user requests about email actions into JSON.\nReturn only JSON with fields action (notify|summarize), criteria, and description.`;
