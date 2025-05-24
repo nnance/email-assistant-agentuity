@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { anthropic } from '@ai-sdk/anthropic';
 import { randomUUID } from 'crypto';
 import type { EmailAction } from './types.js';
-import { saveAction } from './store.js';
+import { saveAction, getActions } from './store.js';
 
 export const welcome = () => {
   return {
@@ -23,12 +23,25 @@ export const welcome = () => {
   };
 };
 
-async function interpretAction(text: string): Promise<Omit<EmailAction, 'id' | 'createdAt'>> {
-  const systemPrompt = `You convert user requests about email actions into JSON.\nReturn only JSON with fields action (notify|summarize), criteria, and description.`;
+type Instruction =
+  | { command: 'list' }
+  | {
+      command: 'create';
+      action: 'notify' | 'summarize';
+      criteria: string;
+      description: string;
+    };
+
+async function interpretInstruction(text: string): Promise<Instruction> {
+  const systemPrompt = `You convert user requests about email actions into JSON.\\n` +
+    `Return only JSON.\\n` +
+    `If the user wants to create a new action, respond with {\\"command\\":\\"create\\",\\"action\\":\\"notify|summarize\\",\\"criteria\\":string,\\"description\\":string}.\\n` +
+    `If the user wants to list existing actions, respond with {\\"command\\":\\"list\\"}.`;
   const schema = z.object({
-    action: z.enum(['notify', 'summarize']),
-    criteria: z.string(),
-    description: z.string(),
+    command: z.enum(['create', 'list']),
+    action: z.enum(['notify', 'summarize']).optional(),
+    criteria: z.string().optional(),
+    description: z.string().optional(),
   });
 
   try {
@@ -38,9 +51,22 @@ async function interpretAction(text: string): Promise<Omit<EmailAction, 'id' | '
       prompt: text,
       schema,
     });
-    return result.object;
-  } catch {
+    const obj = result.object;
+    if (obj.command === 'list') {
+      return { command: 'list' };
+    }
     return {
+      command: 'create',
+      action: obj.action!,
+      criteria: obj.criteria!,
+      description: obj.description!,
+    };
+  } catch {
+    if (/\blist|show|display\b/i.test(text)) {
+      return { command: 'list' };
+    }
+    return {
+      command: 'create',
       action: 'notify',
       criteria: text,
       description: text,
@@ -57,12 +83,19 @@ export default async function Agent(
   if (!input) {
     return resp.status(400).json({ error: 'No instruction provided' });
   }
-  const parsed = await interpretAction(input);
+  const instruction = await interpretInstruction(input);
+
+  if (instruction.command === 'list') {
+    const actions = await getActions(ctx);
+    return resp.json({ actions });
+  }
 
   const action: EmailAction = {
     id: randomUUID(),
     createdAt: new Date().toISOString(),
-    ...parsed,
+    action: instruction.action,
+    criteria: instruction.criteria,
+    description: instruction.description,
   };
 
   await saveAction(ctx, action);
