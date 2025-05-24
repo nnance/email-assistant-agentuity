@@ -55,11 +55,17 @@ async function interpretInstruction(text: string): Promise<Instruction> {
     if (obj.command === 'list') {
       return { command: 'list' };
     }
+    
+    // Validate required fields for create command
+    if (!obj.action || !obj.criteria || !obj.description) {
+      throw new Error('Missing required fields for create command');
+    }
+    
     return {
       command: 'create',
-      action: obj.action!,
-      criteria: obj.criteria!,
-      description: obj.description!,
+      action: obj.action,
+      criteria: obj.criteria,
+      description: obj.description,
     };
   } catch {
     if (/\blist|show|display\b/i.test(text)) {
