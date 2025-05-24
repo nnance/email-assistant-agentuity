@@ -35,7 +35,7 @@ async function interpretAction(
     notify: z
       .object({
         method: z.enum(['email', 'sms', 'push']),
-        frequency: z.string().optional(),
+				frequency: z.enum(['immediate', 'daily', 'weekly']).optional(),
       })
       .optional(),
   });
