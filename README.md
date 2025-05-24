@@ -94,6 +94,10 @@ Example requests include:
 
 To see the actions you've already saved, ask the `actions` agent with a natural language prompt such as "show my saved actions". The agent will return the current action objects as JSON.
 
+## 🗒️ Email Preferences
+
+The `preferences` agent will manage user-defined email settings. For now it returns a placeholder response so you can build additional features later.
+
 ## 🛠️ Advanced Usage
 
 ### Environment Variables

@@ -68,3 +68,6 @@ agents:
     name: actions
     # The description of the Agent which is editable
     description: Agent to manage actions to take based on email events
+  - id: agent_a17ceeedf35f98ee6389065839883603
+    name: preferences
+    description: Agent to manage user email preferences
