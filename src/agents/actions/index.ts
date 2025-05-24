@@ -23,12 +23,21 @@ export const welcome = () => {
   };
 };
 
-async function interpretAction(text: string): Promise<Omit<EmailAction, 'id' | 'createdAt'>> {
-  const systemPrompt = `You convert user requests about email actions into JSON.\nReturn only JSON with fields action (notify|summarize), criteria, and description.`;
+async function interpretAction(
+  text: string,
+): Promise<Omit<EmailAction, 'id' | 'createdAt'>> {
+  const systemPrompt = `You convert user requests about email actions into JSON.\nReturn only JSON with fields event, action, description, optional criteria, and optional notify {method, frequency}.`;
   const schema = z.object({
-    action: z.enum(['notify', 'summarize']),
-    criteria: z.string(),
+    event: z.string(),
+    action: z.string(),
     description: z.string(),
+    criteria: z.string().optional(),
+    notify: z
+      .object({
+        method: z.enum(['email', 'sms', 'push']),
+        frequency: z.string().optional(),
+      })
+      .optional(),
   });
 
   try {
@@ -41,9 +50,10 @@ async function interpretAction(text: string): Promise<Omit<EmailAction, 'id' | '
     return result.object;
   } catch {
     return {
+      event: 'new_email',
       action: 'notify',
-      criteria: text,
       description: text,
+      criteria: text,
     };
   }
 }

@@ -71,14 +71,19 @@ Your project configuration is stored in `agentuity.yaml`. This file defines your
 
 ## ✉️ Email Actions
 
-The `actions` agent can create and store email automation rules from plain text instructions. Each rule is saved using the following structure:
+The `actions` agent can create and store email automation rules from plain text instructions. Rules can include specific events, custom behaviors, and notification preferences. Each rule is saved using the following structure:
 
 ```ts
 interface EmailAction {
   id: string;
   description: string;
-  action: "notify" | "summarize";
-  criteria: string;
+  event: string; // event that triggers the rule
+  action: string; // action to perform
+  criteria?: string; // optional filters
+  notify?: {
+    method: 'email' | 'sms' | 'push';
+    frequency?: 'immediate' | 'daily' | 'weekly';
+  };
   createdAt: string;
 }
 ```
